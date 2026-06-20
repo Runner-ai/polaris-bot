@@ -434,13 +434,11 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         answer = response.choices[0].message.content
         last_ask[cooldown_key] = datetime.now()
 
-        user_name = update.message.from_user.first_name
-        await processing_msg.delete()
-        await update.message.reply_text(
-            f"🤖 *{user_name} спрашивает:* _{question}_\n\n"
-            f"{answer}",
-            parse_mode="Markdown"
-        )
+      await processing_msg.delete()
+await update.message.reply_text(
+    f"🤖 {answer}",
+    parse_mode="Markdown"
+)
 
     except Exception as e:
         logging.error(f"Ошибка Groq /ask: {e}")
