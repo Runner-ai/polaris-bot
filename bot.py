@@ -66,8 +66,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "📖 *Все команды бота:*\n\n"
-        "🧠 /sum 200 — пересказ последних 200 сообщений по каждому участнику чата\n\n"
-        "🎲 /quote — случайная цитата дня из истории чата\n\n"
+        "🧠 /sum [10-1000] — пересказ последних N сообщений по каждому участнику чата\n\n"
+        "🎲 /quote — случайная цитата дня из сохранённой истории чата\n\n"
         "🌤 /weather Киев — текущая погода в любом городе\n\n"
         "🎨 /imagine закат над морем — генерация картинки по описанию\n\n"
         "🤖 /ask Что такое ИИ? — задать вопрос искусственному интеллекту\n\n"
