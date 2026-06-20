@@ -13,6 +13,7 @@ TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 WEATHER_API_KEY = os.environ.get("WEATHER_API_KEY")
 COOLDOWN_MINUTES = 10
+COOLDOWN_ASK_SECONDS = 30
 
 # Инициализация
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +22,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 # Хранилище
 chat_messages = defaultdict(list)
 last_request = {}
+last_ask = {}
 
 # ─────────────────────────────────────────
 # СОХРАНЕНИЕ СООБЩЕНИЙ
@@ -54,11 +56,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "👾 Привет! Я бот вашей группы.\n\n"
-        "📋 Команды:\n"
-        "/sum [число] — пересказ последних N сообщений\n"
-        "/quote — цитата дня из истории чата\n"
-        "/weather [город] — погода в городе\n"
-        "/help — помощь"
+        "Напиши /help чтобы увидеть все команды."
     )
 
 # ─────────────────────────────────────────
@@ -67,11 +65,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "📖 Команды:\n\n"
-        "🧠 /sum 200 — пересказ последних 200 сообщений по каждому участнику\n"
-        "🎲 /quote — случайная цитата дня кого-то из чата\n"
-        "🌤 /weather Киев — погода в любом городе\n\n"
-        f"⏳ Cooldown между /sum запросами: {COOLDOWN_MINUTES} минут"
+        "📖 *Все команды бота:*\n\n"
+        "🧠 /sum 200 — пересказ последних 200 сообщений по каждому участнику чата\n\n"
+        "🎲 /quote — случайная цитата дня из истории чата\n\n"
+        "🌤 /weather Киев — текущая погода в любом городе\n\n"
+        "🎨 /imagine закат над морем — генерация картинки по описанию\n\n"
+        "🤖 /ask Что такое ИИ? — задать вопрос искусственному интеллекту\n\n"
+        "❓ /help — список всех команд\n\n"
+        f"⏳ Cooldown: /sum — {COOLDOWN_MINUTES} мин, /ask — {COOLDOWN_ASK_SECONDS} сек, "
+        f"/imagine — 30 сек",
+        parse_mode="Markdown"
     )
 
 # ─────────────────────────────────────────
@@ -145,7 +148,7 @@ async def sum_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Переписка:
 {chat_text}
 
-Сделай краткий пересказ для каждого участника отдельно — о чём писал, что предлагал, какое настроение.
+Сделай краткий пересказ для каждого участника отдельно — только на основе того что он реально написал: о чём говорил, что предлагал, с кем и о чём спорил. Не придумывай ничего лишнего.
 Формат ответа:
 👤 Имя:
 (2-4 предложения)
@@ -225,11 +228,28 @@ async def quote_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def weather_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text(
-            "🌍 Укажи город. Например:\n/weather Киев\n/weather Чернигов"
+            "🌍 Укажи город. Например:\n/weather Киев\n/weather Chernihiv"
         )
         return
 
     city = " ".join(context.args)
+
+    city_map = {
+        "киев": "Kyiv", "київ": "Kyiv",
+        "чернигов": "Chernihiv", "чернігів": "Chernihiv",
+        "харьков": "Kharkiv", "харків": "Kharkiv",
+        "одесса": "Odesa", "одеса": "Odesa",
+        "львов": "Lviv", "львів": "Lviv",
+        "днепр": "Dnipro", "дніпро": "Dnipro",
+        "запорожье": "Zaporizhzhia", "запоріжжя": "Zaporizhzhia",
+        "николаев": "Mykolaiv", "миколаїв": "Mykolaiv",
+        "москва": "Moscow", "варшава": "Warsaw",
+        "берлин": "Berlin", "париж": "Paris",
+        "лондон": "London", "прага": "Prague",
+        "вена": "Vienna", "рим": "Rome",
+    }
+
+    city = city_map.get(city.lower(), city)
 
     try:
         url = "https://api.openweathermap.org/data/2.5/weather"
@@ -300,6 +320,136 @@ async def weather_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # ─────────────────────────────────────────
+# /imagine — генерация картинки
+# ─────────────────────────────────────────
+
+async def imagine_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    chat_id = update.message.chat_id
+
+    cooldown_key = f"imagine_{chat_id}_{user_id}"
+    if cooldown_key in last_ask:
+        elapsed = (datetime.now() - last_ask[cooldown_key]).total_seconds()
+        if elapsed < 30:
+            remaining = int(30 - elapsed)
+            await update.message.reply_text(
+                f"⏳ Подожди ещё {remaining} сек перед следующей картинкой."
+            )
+            return
+
+    if not context.args:
+        await update.message.reply_text(
+            "🎨 Опиши что нарисовать. Например:\n"
+            "/imagine красивый закат над Киевом\n"
+            "/imagine кот в космосе в стиле аниме"
+        )
+        return
+
+    prompt = " ".join(context.args)
+    processing_msg = await update.message.reply_text(
+        "🎨 Генерирую картинку, подожди 15-30 секунд..."
+    )
+
+    try:
+        import urllib.parse
+        encoded_prompt = urllib.parse.quote(prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
+
+        img_response = requests.get(image_url, timeout=60)
+
+        if img_response.status_code == 200:
+            last_ask[cooldown_key] = datetime.now()
+            await processing_msg.delete()
+            await update.message.reply_photo(
+                photo=img_response.content,
+                caption=f"🎨 *{prompt}*",
+                parse_mode="Markdown"
+            )
+        else:
+            await processing_msg.delete()
+            await update.message.reply_text(
+                "❌ Не удалось сгенерировать картинку. Попробуй позже."
+            )
+
+    except requests.exceptions.Timeout:
+        await processing_msg.delete()
+        await update.message.reply_text(
+            "⏱ Сервис генерации не отвечает. Попробуй позже."
+        )
+    except Exception as e:
+        logging.error(f"Ошибка Pollinations: {e}")
+        await processing_msg.delete()
+        await update.message.reply_text(
+            "❌ Ошибка генерации. Попробуй позже."
+        )
+
+# ─────────────────────────────────────────
+# /ask — вопрос к ИИ
+# ─────────────────────────────────────────
+
+async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    chat_id = update.message.chat_id
+
+    cooldown_key = f"ask_{chat_id}_{user_id}"
+    if cooldown_key in last_ask:
+        elapsed = (datetime.now() - last_ask[cooldown_key]).total_seconds()
+        if elapsed < COOLDOWN_ASK_SECONDS:
+            remaining = int(COOLDOWN_ASK_SECONDS - elapsed)
+            await update.message.reply_text(
+                f"⏳ Подожди ещё {remaining} сек."
+            )
+            return
+
+    if not context.args:
+        await update.message.reply_text(
+            "🤖 Задай вопрос. Например:\n"
+            "/ask Что такое чёрная дыра?\n"
+            "/ask Придумай тост на день рождения"
+        )
+        return
+
+    question = " ".join(context.args)
+    processing_msg = await update.message.reply_text("🤖 Думаю...")
+
+    try:
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Ты умный и дружелюбный помощник в групповом чате друзей. "
+                               "Отвечай кратко и по делу, максимум 3-4 предложения. "
+                               "Используй язык собеседника."
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ],
+            max_tokens=500,
+            temperature=0.8
+        )
+
+        answer = response.choices[0].message.content
+        last_ask[cooldown_key] = datetime.now()
+
+        user_name = update.message.from_user.first_name
+        await processing_msg.delete()
+        await update.message.reply_text(
+            f"🤖 *{user_name} спрашивает:* _{question}_\n\n"
+            f"{answer}",
+            parse_mode="Markdown"
+        )
+
+    except Exception as e:
+        logging.error(f"Ошибка Groq /ask: {e}")
+        await processing_msg.delete()
+        await update.message.reply_text(
+            "❌ Ошибка. Попробуй позже."
+        )
+
+# ─────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────
 
@@ -311,6 +461,8 @@ def main():
     app.add_handler(CommandHandler("sum", sum_command))
     app.add_handler(CommandHandler("quote", quote_command))
     app.add_handler(CommandHandler("weather", weather_command))
+    app.add_handler(CommandHandler("imagine", imagine_command))
+    app.add_handler(CommandHandler("ask", ask_command))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND, handle_message
     ))
