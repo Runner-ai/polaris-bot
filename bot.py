@@ -145,18 +145,18 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Откат {COOLDOWN_SUM} мин.\n\n"
 
         "⚖️ *Разбор спора*\n"
-        "/спор Имя1 Имя2 200 — анализ спора между "
+        "/spor Имя1 Имя2 200 — анализ спора между "
         "двумя участниками\n"
-        "Пример: /спор Иван Маша 200\n"
+        "Пример: /spor Иван Маша 200\n"
         "⚠️ Имена — как отображаются в чате, "
         "без @ и тегов\n"
         f"Максимум {MAX_DISPUTE} сообщений. "
         f"Откат {COOLDOWN_DISPUTE} мин.\n\n"
 
         "🔍 *Анализ участника*\n"
-        "/скан Имя 200 — анализ сообщений "
+        "/scan Имя 200 — анализ сообщений "
         "одного участника\n"
-        "Пример: /скан Иван 200\n"
+        "Пример: /scan Иван 200\n"
         "⚠️ Имя — как отображается в чате, "
         "без @ и тегов\n"
         f"Максимум {MAX_SCAN} сообщений. "
@@ -329,7 +329,7 @@ async def sum_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 # ─────────────────────────────────────────
-# /спор — разбор спора двух участников
+# /spor — разбор спора двух участников
 # ─────────────────────────────────────────
 
 async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -344,13 +344,13 @@ async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # Парсим аргументы: /спор Имя1 Имя2 [число]
+    # Парсим аргументы: /spor Имя1 Имя2 [число]
     args = context.args
     if not args or len(args) < 2:
         await update.message.reply_text(
             "⚖️ Использование:\n"
-            "/спор Имя1 Имя2 200\n\n"
-            "Пример: /спор Иван Маша 200\n"
+            "/spor Имя1 Имя2 200\n\n"
+            "Пример: /spor Иван Маша 200\n"
             "⚠️ Имена — как отображаются в чате, "
             "без @ и тегов\n"
             f"Максимум {MAX_DISPUTE} сообщений."
@@ -395,7 +395,7 @@ async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"между *{name1}* и *{name2}*.\n\n"
             "Проверь что имена написаны точно "
             "как в чате (без @ и тегов).\n"
-            f"Например: /спор Иван Маша 200",
+            f"Например: /spor Иван Маша 200",
             parse_mode="Markdown"
         )
         return
@@ -485,13 +485,13 @@ async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Попробуй через минуту."
             )
         else:
-            logging.error(f"Ошибка /спор: {e}")
+            logging.error(f"Ошибка /spor: {e}")
             await update.message.reply_text(
                 "❌ Ошибка при анализе. Попробуй позже."
             )
 
 # ─────────────────────────────────────────
-# /скан — анализ одного участника
+# /scan — анализ одного участника
 # ─────────────────────────────────────────
 
 async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -510,8 +510,8 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not args:
         await update.message.reply_text(
             "🔍 Использование:\n"
-            "/скан Имя 200\n\n"
-            "Пример: /скан Иван 200\n"
+            "/scan Имя 200\n\n"
+            "Пример: /scan Иван 200\n"
             "⚠️ Имя — как отображается в чате, "
             "без @ и тегов\n"
             f"Максимум {MAX_SCAN} сообщений."
@@ -551,7 +551,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"от *{name}*.\n\n"
             "Проверь что имя написано точно "
             "как в чате (без @ и тегов).\n"
-            f"Например: /скан Иван 200",
+            f"Например: /scan Иван 200",
             parse_mode="Markdown"
         )
         return
@@ -640,7 +640,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "Попробуй через минуту."
             )
         else:
-            logging.error(f"Ошибка /скан: {e}")
+            logging.error(f"Ошибка /scan: {e}")
             await update.message.reply_text(
                 "❌ Ошибка при анализе. Попробуй позже."
             )
@@ -945,8 +945,8 @@ def main():
     app.add_handler(CommandHandler("start",   start_command))
     app.add_handler(CommandHandler("help",    help_command))
     app.add_handler(CommandHandler("sum",     sum_command))
-    app.add_handler(CommandHandler("спор",    dispute_command))
-    app.add_handler(CommandHandler("скан",    scan_command))
+    app.add_handler(CommandHandler("spor",    dispute_command))
+    app.add_handler(CommandHandler("scan",    scan_command))
     app.add_handler(CommandHandler("quote",   quote_command))
     app.add_handler(CommandHandler("weather", weather_command))
     app.add_handler(CommandHandler("imagine", imagine_command))
