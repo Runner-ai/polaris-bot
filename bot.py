@@ -440,8 +440,8 @@ async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 - Пиши на том же языке что и переписка"""
 
     try:
-        response = deepseek_client.chat.completions.create(
-            model="deepseek-v4-flash",
+        response = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1000,
             temperature=0.6
@@ -956,22 +956,20 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             results["groq"] = "🔴"
 
-    # Проверка DeepSeek / OpenModel
+    # Проверка Groq для /spor и /skan
     try:
-        deepseek_client.chat.completions.create(
-            model="deepseek-v4-flash",
+        groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": "ping"}],
             max_tokens=5
         )
-        results["deepseek"] = "🟢"
+        results["spor_skan"] = "🟢"
     except Exception as e:
         err = str(e).lower()
-        if "balance" in err or "insufficient" in err:
-            results["deepseek"] = "🔴 нет баланса"
-        elif "rate" in err or "429" in err:
-            results["deepseek"] = "🟡 лимит запросов"
+        if "rate" in err or "429" in err:
+            results["spor_skan"] = "🟡 лимит запросов"
         else:
-            results["deepseek"] = f"🔴 {str(e)[:100]}"
+            results["spor_skan"] = f"🔴 {str(e)[:100]}"
 
     # Проверка погоды
     try:
@@ -1013,7 +1011,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔧 Статус бота:\n\n"
         f"🟦 Telegram — 🟢 онлайн\n"
         f"🧠 Groq (/sum, /ask, /imagine) — {results['groq']}\n"
-        f"⚖️ DeepSeek (/spor, /skan) — {results['deepseek']}\n"
+        f"⚖️ Groq (/spor, /skan) — {results['spor_scan']}\n"
         f"🌤 Погода — {results['weather']}\n"
         f"🎨 Pollinations — {results['pollinations']}\n"
         f"💾 Память — {results['memory']}",
