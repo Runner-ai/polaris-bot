@@ -178,6 +178,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "любой вопрос\n"
         f"Откат {COOLDOWN_ASK} сек.\n\n"
 
+        "🔧 /status — проверка работоспособности всех сервисов\n\n"
+
         "❓ /help — этот список команд",
         parse_mode="Markdown"
     )
@@ -934,7 +936,89 @@ async def ask_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(
                 "❌ Ошибка. Попробуй позже."
             )
+async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("🔧 Проверяю статус всех сервисов...")
 
+    results = {}
+
+    # Проверка Groq
+    try:
+        groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=5
+        )
+        results["groq"] = "🟢"
+    except Exception as e:
+        err = str(e).lower()
+        if "rate" in err or "429" in err:
+            results["groq"] = "🟡 лимит запросов"
+        else:
+            results["groq"] = "🔴"
+
+    # Проверка DeepSeek / OpenModel
+    try:
+        deepseek_client.chat.completions.create(
+            model="deepseek-v4-flash",
+            messages=[{"role": "user", "content": "ping"}],
+            max_tokens=5
+        )
+        results["deepseek"] = "🟢"
+    except Exception as e:
+        err = str(e).lower()
+        if "balance" in err or "insufficient" in err:
+            results["deepseek"] = "🔴 нет баланса"
+        elif "rate" in err or "429" in err:
+            results["deepseek"] = "🟡 лимит запросов"
+        else:
+            results["deepseek"] = "🔴"
+
+    # Проверка погоды
+    try:
+        resp = requests.get(
+            "https://api.openweathermap.org/data/2.5/weather",
+            params={"q": "London", "appid": WEATHER_API_KEY},
+            timeout=5
+        )
+        if resp.json().get("cod") == 200:
+            results["weather"] = "🟢"
+        else:
+            results["weather"] = "🔴 неверный ключ"
+    except Exception:
+        results["weather"] = "🔴"
+
+    # Проверка Pollinations
+    try:
+        resp = requests.get(
+            "https://image.pollinations.ai/prompt/test"
+            "?width=64&height=64&nologo=true",
+            timeout=15
+        )
+        if resp.status_code == 200:
+            results["pollinations"] = "🟢"
+        else:
+            results["pollinations"] = "🔴"
+    except Exception:
+        results["pollinations"] = "🔴"
+
+    # Память бота
+    total_msgs = sum(len(v) for v in chat_messages.values())
+    if total_msgs > 0:
+        results["memory"] = f"🟢 {total_msgs} сообщений"
+    else:
+        results["memory"] = "🟡 пусто (жди сообщений в чате)"
+
+    await msg.delete()
+    await update.message.reply_text(
+        "🔧 *Статус бота:*\n\n"
+        f"🟦 Telegram — 🟢 онлайн\n"
+        f"🧠 Groq (/sum, /ask, /imagine) — {results['groq']}\n"
+        f"⚖️ DeepSeek (/spor, /skan) — {results['deepseek']}\n"
+        f"🌤 Погода — {results['weather']}\n"
+        f"🎨 Pollinations — {results['pollinations']}\n"
+        f"💾 Память — {results['memory']}",
+        parse_mode="Markdown"
+    )
 # ─────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────
@@ -951,6 +1035,7 @@ def main():
     app.add_handler(CommandHandler("weather", weather_command))
     app.add_handler(CommandHandler("imagine", imagine_command))
     app.add_handler(CommandHandler("ask",     ask_command))
+    app.add_handler(CommandHandler("status", status_command))
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND, handle_message
     ))
