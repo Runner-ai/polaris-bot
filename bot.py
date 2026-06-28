@@ -42,7 +42,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 deepseek_client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.openmodel.ai/v1"
+    base_url="https://api.openmodel.app/v1"
 )
 
 # ─────────────────────────────────────────
