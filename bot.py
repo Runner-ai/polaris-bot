@@ -42,7 +42,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 deepseek_client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com"
+    base_url="https://api.openmodel.ai/v1"
 )
 
 # ─────────────────────────────────────────
@@ -439,7 +439,7 @@ async def dispute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         response = deepseek_client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek-v4-flash",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1000,
             temperature=0.6
@@ -595,7 +595,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         response = deepseek_client.chat.completions.create(
-            model="deepseek-chat",
+            model="deepseek-v4-flash",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=1000,
             temperature=0.6
