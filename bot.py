@@ -971,7 +971,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif "rate" in err or "429" in err:
             results["deepseek"] = "🟡 лимит запросов"
         else:
-            results["deepseek"] = "🔴"
+            results["deepseek"] = f"🔴 {str(e)[:100]}"
 
     # Проверка погоды
     try:
