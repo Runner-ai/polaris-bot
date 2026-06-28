@@ -42,7 +42,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 
 deepseek_client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.openmodel.app/v1"
+    base_url="https://api.openmodel.ai/v1"
 )
 
 # ─────────────────────────────────────────
@@ -1010,7 +1010,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await msg.delete()
     await update.message.reply_text(
-        "🔧 *Статус бота:*\n\n"
+        "🔧 Статус бота:\n\n"
         f"🟦 Telegram — 🟢 онлайн\n"
         f"🧠 Groq (/sum, /ask, /imagine) — {results['groq']}\n"
         f"⚖️ DeepSeek (/spor, /skan) — {results['deepseek']}\n"
