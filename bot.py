@@ -1017,7 +1017,6 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🌤 Погода — {results['weather']}\n"
         f"🎨 Pollinations — {results['pollinations']}\n"
         f"💾 Память — {results['memory']}",
-        parse_mode="Markdown"
     )
 # ─────────────────────────────────────────
 # MAIN
