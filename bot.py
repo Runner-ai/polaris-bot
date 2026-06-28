@@ -941,7 +941,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     results = {}
 
-    # Проверка Groq
+    # Проверка Groq (sum, ask, imagine)
     try:
         groq_client.chat.completions.create(
             model="llama-3.1-8b-instant",
@@ -956,7 +956,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             results["groq"] = "🔴"
 
-    # Проверка Groq для /spor и /skan
+    # Проверка Groq для spor и skan
     try:
         groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -969,7 +969,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if "rate" in err or "429" in err:
             results["spor_skan"] = "🟡 лимит запросов"
         else:
-            results["spor_skan"] = f"🔴 {str(e)[:100]}"
+            results["spor_skan"] = "🔴"
 
     # Проверка погоды
     try:
@@ -1011,10 +1011,10 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🔧 Статус бота:\n\n"
         f"🟦 Telegram — 🟢 онлайн\n"
         f"🧠 Groq (/sum, /ask, /imagine) — {results['groq']}\n"
-        f"⚖️ Groq (/spor, /skan) — {results['spor_scan']}\n"
+        f"⚖️ Groq (/spor, /skan) — {results['spor_skan']}\n"
         f"🌤 Погода — {results['weather']}\n"
         f"🎨 Pollinations — {results['pollinations']}\n"
-        f"💾 Память — {results['memory']}",
+        f"💾 Память — {results['memory']}"
     )
 # ─────────────────────────────────────────
 # MAIN
